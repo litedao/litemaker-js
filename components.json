@@ -1,0 +1,10 @@
+{
+    "dai_db": {
+        "address": "0x4778e4d373733acef8b94007a0d133743adc2011",
+        "typename": "DSBalanceDB"
+    },
+    "mkr_db": {
+        "address": "0xbd5faeca7fd85f454b63ebc9f77659b4061f167f",
+        "typename": "DSBalanceDB"
+    }
+}
