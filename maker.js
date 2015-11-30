@@ -35,7 +35,7 @@ var Maker = function() {
         });
     }
 
-    this.getBalance = function(symbol, addr) {
+    this.getBalance = function(symbol, addr, cb) {
         var objectname = this.symbol_to_db_name[symbol];
         var baldb = this.objects[objectname].instance;
         baldb.get_balance(function(err, res) {
