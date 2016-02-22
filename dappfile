@@ -1,0 +1,12 @@
+name: maker-js
+layout:
+  sol_sources: contracts
+  build_dir: build
+dependencies:
+  dappsys: 'https://github.com/nexusdev/dappsys.git@4dceee5'
+environments:
+  morden:
+    objects:
+      echo:
+        class: Echo
+        address: '0x803b0657331c7e9fa0124635d3ea5540d9150c2a'
