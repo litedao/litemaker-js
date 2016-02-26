@@ -4392,13 +4392,42 @@ dapple['dappsys'] = (function builder () {
 })();
 
 dapple['maker'] = (function builder () {
+  function sanitize (web3, opts, cb) {
+    var defaultOpts = {
+      from: web3.eth.defaultAccount || web3.eth.coinbase
+    };
+
+    if (typeof opts === 'function') {
+      cb = opts;
+      opts = defaultOpts;
+    }
+    if (typeof opts === 'undefined') {
+      opts = defaultOpts;
+    }
+    if (typeof cb === 'undefined') {
+      cb = function () {};
+    }
+
+    if (!opts.gas) {
+      opts.gas = web3.eth.estimateGas(opts);
+    }
+
+    return {opts: opts, cb: cb};
+  }
+
   var MakerAdmin = function (maker) {
     this._maker = maker;
     this._dappsys = maker.dappsys;
-    this.multisig = maker.dappsys.objects.multisig;
+    this._web3 = maker.dappsys.web3;
+    this._multisig = maker.dappsys.objects.multisig;
   };
 
-  MakerAdmin.prototype.propose = function (obj, func, args, value, opts, cb) {
+  MakerAdmin.prototype.proposeAction = function (obj, func, args,
+                                                 value, opts, cb) {
+    var sanitized = sanitize(this._web3, opts, cb);
+    opts = sanitized.opts;
+    cb = sanitized.cb;
+
     var proposalData;
 
     if (this._dappsys[obj][func].getData) {
@@ -4408,7 +4437,7 @@ dapple['maker'] = (function builder () {
       proposalData = this._getData(obj, func, args);
     }
 
-    var filter = this.multisig.Proposed(
+    var filter = this._multisig.Proposed(
         {calldata: proposalData},
         function (err, evt) {
           filter.stopWatching();
@@ -4421,11 +4450,45 @@ dapple['maker'] = (function builder () {
       objects = this._maker;
     }
     var objAddress = objects[obj]['address'];
-    this.multisig.propose(objAddress, proposalData, value, opts);
+    this._multisig.propose(objAddress, proposalData, value, opts);
   };
 
-  MakerAdmin.prototype.confirm = function () {
-    this.multisig.confirm.apply(this.multisig, arguments);
+  MakerAdmin.prototype.confirmAction = function (actionID, opts, cb) {
+    var sanitized = sanitize(this._web3, opts, cb);
+    opts = sanitized.opts;
+    cb = sanitized.cb;
+
+    var filter = this._web3.filter('latest', function (err, block) {
+      if (err) {
+        filter.stopWatching();
+        return cb(err);
+      }
+
+      this._web3.getTransactionReceipt(txID, function (err, receipt) {
+        if (err) {
+          filter.stopWatching();
+          return cb(err);
+        }
+
+        if (receipt.blockNumber) {
+          filter.stopWatching();
+
+          if (receipt.logs.length === 0) {
+            return cb('Exception was thrown in multisig contract.');
+          }
+          return cb(null, actionID);
+        }
+      });
+    });
+
+    var txID = this._multisig.confirm(actionID, opts);
+  };
+
+  MakerAdmin.prototype.isAdmin = function (address) {
+    if (typeof address === 'undefined') {
+      address = this._web3.eth.defaultAccount || this._web3.eth.coinbase;
+    }
+    return this._multisig.isMember.call(address);
   };
 
   MakerAdmin.prototype._getData = function (targetName, func, args) {
@@ -4458,22 +4521,22 @@ dapple['maker'] = (function builder () {
     }
 
     this.dappsys = new dapple.dappsys.class(environment, web3);
-
-    this.tokenRegistry = this.dappsys.objects.token_registry;
-
-    this.DAI = this.dappsys.classes['DSTokenFrontend']
-        .at(this.tokenRegistry.getToken.call('DAI'));
-
-    this.ETH = this.dappsys.classes['DSEthToken']
-        .at(this.tokenRegistry.getToken.call('ETH'));
-
-    this.MKR = this.dappsys.classes['DSTokenFrontend']
-        .at(this.tokenRegistry.getToken.call('MKR'));
-
     this.admin = new MakerAdmin(this);
   };
 
-  Maker.prototype.
+  Maker.prototype.getToken = function (symbol) {
+    var tokenClass = 'DSTokenFrontend';
+    if (symbol === 'ETH') {
+      tokenClass = 'DSEthToken';
+    }
+    return this.dappsys.classes[tokenClass]
+           .at(this.tokenRegistry.getToken.call(symbol));
+  };
+
+  // Helper function for logging callback arguments.
+  Maker.prototype.logCB = function () {
+    console.log(JSON.stringify(arguments));
+  };
 
   return Maker;
 })();

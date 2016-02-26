@@ -10,3 +10,8 @@ environments:
       echo:
         class: Echo
         address: '0x803b0657331c7e9fa0124635d3ea5540d9150c2a'
+  live:
+    objects:
+      echo:
+        class: Echo
+        address: '0x7d3767952188c0843876a3c30e6985d13ba6cec2'
