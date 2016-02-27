@@ -4554,7 +4554,7 @@ dapple['maker'] = (function builder () {
     return echoer[func].call.apply(echoer, args);
   };
 
-  var Maker = function (environment, _web3) {
+  var Maker = function (_web3, environment) {
     if (typeof web3 === 'undefined') {
       if (typeof _web3 !== 'undefined') {
         var web3 = _web3;
@@ -4563,7 +4563,8 @@ dapple['maker'] = (function builder () {
       }
     }
 
-    this.dappsys = new dapple.dappsys.class(environment, web3);
+    this._web3 = web3;
+    this.dappsys = new dapple.dappsys.class(web3, environment);
     this.admin = new MakerAdmin(this);
   };
 
