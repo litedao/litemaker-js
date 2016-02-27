@@ -4573,8 +4573,9 @@ dapple['maker'] = (function builder () {
     if (symbol === 'ETH') {
       tokenClass = 'DSEthToken';
     }
-    return this.dappsys.classes[tokenClass]
-           .at(this.tokenRegistry.getToken.call(symbol));
+    return this.dappsys.classes[tokenClass].at(
+        this._web3.toHex(this._web3.toBigNumber(
+            this.dappsys.objects.token_registry.get(symbol))));
   };
 
   // Helper function for logging callback arguments.
