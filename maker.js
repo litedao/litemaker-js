@@ -4423,6 +4423,7 @@ dapple['dappsys'] = (function builder () {
     for (var i in env.objects) {
       var obj = env.objects[i];
       this.objects[i] = this.classes[obj['class']].at(obj.address);
+      this.objects[i].abi = this.classes[obj['class']].abi;
     }
 
     this.environment = env;
@@ -4465,19 +4466,29 @@ dapple['maker'] = (function builder () {
     this._multisig = maker.dappsys.objects.multisig;
   };
 
-  MakerAdmin.prototype.proposeAction = function (obj, func, args,
-                                                 value, opts, cb) {
+  MakerAdmin.prototype.proposeAction = function (
+      contract, func, args, value, opts, cb) {
+    if (typeof contract === 'string') {
+      if (!(contract in this._dappsys.objects)) {
+        throw new Error('Unrecognized contract name: ' + contract);
+      }
+      contract = this._dappsys.objects[contract];
+    }
+
+    if (!(func in contract)) {
+      throw new Error('Unrecognized function name: ' + func);
+    }
+
     var sanitized = sanitize(this._web3, opts, cb);
     opts = sanitized.opts;
     cb = sanitized.cb;
 
     var proposalData;
 
-    if (this._dappsys[obj][func].getData) {
-      proposalData = this._dappsys[obj][func].getData
-                     .apply(this._dappsys[obj], args);
+    if (contract[func].getData) {
+      proposalData = contract[func].getData.apply(contract, args);
     } else {
-      proposalData = this._getData(obj, func, args);
+      proposalData = this._getData(contract, func, args);
     }
 
     var filter = this._multisig.Proposed(
@@ -4488,43 +4499,15 @@ dapple['maker'] = (function builder () {
           cb(null, evt.args.action_id);
         });
 
-    var objects = this._dappsys.environment.objects;
-    if (targetName in this._maker) {
-      objects = this._maker;
-    }
-    var objAddress = objects[obj]['address'];
-    this._multisig.propose(objAddress, proposalData, value, opts);
+    return this._multisig.propose(contract.address, proposalData, value, opts);
   };
 
   MakerAdmin.prototype.confirmAction = function (actionID, opts, cb) {
-    var sanitized = sanitize(this._web3, opts, cb);
-    opts = sanitized.opts;
-    cb = sanitized.cb;
+    return this._doAction('confirm', actionID, opts, cb);
+  };
 
-    var filter = this._web3.filter('latest', function (err, block) {
-      if (err) {
-        filter.stopWatching();
-        return cb(err);
-      }
-
-      this._web3.getTransactionReceipt(txID, function (err, receipt) {
-        if (err) {
-          filter.stopWatching();
-          return cb(err);
-        }
-
-        if (receipt.blockNumber) {
-          filter.stopWatching();
-
-          if (receipt.logs.length === 0) {
-            return cb('Exception was thrown in multisig contract.');
-          }
-          return cb(null, actionID);
-        }
-      });
-    });
-
-    var txID = this._multisig.confirm(actionID, opts);
+  MakerAdmin.prototype.triggerAction = function (actionID, opts, cb) {
+    return this._doAction('trigger', actionID, opts, cb);
   };
 
   MakerAdmin.prototype.isAdmin = function (address) {
@@ -4534,14 +4517,8 @@ dapple['maker'] = (function builder () {
     return this._multisig.isMember.call(address);
   };
 
-  MakerAdmin.prototype._getData = function (targetName, func, args) {
-    var objects = this._dappsys.environment.objects;
-
-    if (targetName in this._maker) {
-      objects = this._maker;
-    }
-    var targetClass = objects[targetName]['class'];
-    var targetABI = this._dappsys.headers[targetClass].interface;
+  MakerAdmin.prototype._getData = function (contract, func, args) {
+    var targetABI = JSON.parse(JSON.stringify(contract.abi));
 
     for (var i = 0; i < targetABI.length; i += 1) {
       if (targetABI[i].type !== 'function') continue;
@@ -4552,6 +4529,41 @@ dapple['maker'] = (function builder () {
                      .at(this._dappsys.objects.echo.address);
 
     return echoer[func].call.apply(echoer, args);
+  };
+
+  MakerAdmin.prototype._doAction = function (verb, actionID, opts, cb) {
+    var sanitized = sanitize(this._web3, opts, cb);
+    opts = sanitized.opts;
+    cb = sanitized.cb;
+
+    var that = this;
+    var filter = this._web3.eth.filter('latest', function (err, block) {
+      if (err) {
+        filter.stopWatching();
+        return cb(err);
+      }
+
+      that._web3.eth.getTransactionReceipt(txID, function (err, receipt) {
+        if (err) {
+          filter.stopWatching();
+          return cb(err);
+        }
+
+        if (receipt.blockNumber) {
+          filter.stopWatching();
+
+          if (receipt.logs.length === 0) {
+            return cb('Exception was thrown in multisig contract. ' +
+                      'Did you send from your admin multisig address?' +
+                      'Have you already ' + verb + 'ed this action?');
+          }
+          return cb(null, actionID);
+        }
+      });
+    });
+
+    var txID = this._multisig[verb](actionID, opts);
+    return txID;
   };
 
   var Maker = function (_web3, environment) {
@@ -4573,9 +4585,12 @@ dapple['maker'] = (function builder () {
     if (symbol === 'ETH') {
       tokenClass = 'DSEthToken';
     }
-    return this.dappsys.classes[tokenClass].at(
+    var token = this.dappsys.classes[tokenClass].at(
         this._web3.toHex(this._web3.toBigNumber(
             this.dappsys.objects.token_registry.get(symbol))));
+    token.abi = this.dappsys.classes[tokenClass].abi;
+
+    return token;
   };
 
   // Helper function for logging callback arguments.
