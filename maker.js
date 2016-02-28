@@ -4464,6 +4464,10 @@ dapple['maker'] = (function builder () {
     this._dappsys = maker.dappsys;
     this._web3 = maker.dappsys.web3;
     this._multisig = maker.dappsys.objects.multisig;
+
+    this.ActionProposed = this._multisig.Proposed.bind(this._multisig);
+    this.ActionConfirmed = this._multisig.Confirmed.bind(this._multisig);
+    this.ActionTriggered = this._multisig.Triggered.bind(this._multisig);
   };
 
   MakerAdmin.prototype.proposeAction = function (
@@ -4508,6 +4512,25 @@ dapple['maker'] = (function builder () {
 
   MakerAdmin.prototype.triggerAction = function (actionID, opts, cb) {
     return this._doAction('trigger', actionID, opts, cb);
+  };
+
+  MakerAdmin.prototype.actionStatus = function (actionID) {
+    var statusArray = this._multisig.getActionStatus(actionID);
+    return {
+      'confirmations': statusArray[0],
+      'expiration': new Date(statusArray[1] * 1000),
+      'triggered': statusArray[2]
+    };
+  };
+
+  MakerAdmin.prototype.getInfo = function () {
+    var info = this._multisig.getInfo();
+    return {
+      'quorum': info[0],
+      'members': info[1],
+      'votingPeriod': info[2],
+      'lastActionID': info[3]
+    };
   };
 
   MakerAdmin.prototype.isAdmin = function (address) {
@@ -4593,9 +4616,16 @@ dapple['maker'] = (function builder () {
     return token;
   };
 
-  // Helper function for logging callback arguments.
+  // Helper functions for logging callback arguments.
   Maker.prototype.logCB = function () {
     console.log(JSON.stringify(arguments));
+  };
+
+  Maker.prototype.logAction = function (err, actionID) {
+    if (err) {
+      console.log('ERROR: ' + err);
+    }
+    console.log('Action ID: ' + actionID);
   };
 
   return Maker;
