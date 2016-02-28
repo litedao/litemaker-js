@@ -111,6 +111,11 @@ Action ID: 1
   ...
 }
 
+> // To confirm a proposal, we have to be an admin. Make sure our sending
+> // address is a member of the admin multisig.
+> maker.admin.isAdmin(opts.from)
+true
+
 > // Our action ID is 1, so that's what we need to pass to confirmAction.
 > // Note that proposing an action does *not* automatically confirm it for you.
 > // This allows people to propose actions they don't necessarily agree with on
