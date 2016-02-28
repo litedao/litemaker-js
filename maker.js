@@ -18,48 +18,91 @@ if (typeof web3 === 'undefined' && typeof Web3 === 'undefined') {
 // Dappsys definition
 dapple['dappsys'] = (function builder () {
   var environments = {
-      'default': 'morden',
       'morden': {
         'objects': {
           'auth_factory1': {
             'class': 'DSAuthFactory',
-            'address': '0xaab68ae2636257caa0cd7de861a70c60010e9fb3'
+            'address': '0x76f1028bcda554f9fe9d12155a7359769494201f'
           },
           'data_factory1': {
             'class': 'DSDataFactory',
-            'address': '0xc5283a6a58c6f1f6b7d6804c6be5a9045cc02a50'
+            'address': '0xd9534e278bfdf6960691eea2ce44265838c143c8'
           },
           'multisig_factory1': {
             'class': 'DSMultisigFactory',
-            'address': '0xafeef3d107ecdf5be9e3e5fad6134ed98034c100'
+            'address': '0xb99c81fc32fba27a34d7dcf6fd5873a9717946c6'
           },
           'token_factory1': {
             'class': 'DSTokenFactory',
-            'address': '0x8e8276455d0981d1c86dbf2ad8357722e1ea9984'
+            'address': '0x4ab815b096ade026c604f1f51b5f33947471ed9a'
           },
           'token_installer1': {
             'class': 'DSTokenInstaller',
-            'address': '0x6d28d1c7c7c7f1473dec9d9e039df0b142702b09'
-          },
-          'eth_token1': {
-            'class': 'DSEthToken',
-            'address': '0x5903c549ef9d068e6bbcacdb9f30ade178d6b658'
+            'address': '0x8e23132a3076e652696d61d581c44d6f94fc1cfa'
           },
           'factory1': {
             'class': 'DSFactory1',
-            'address': '0x9a9a025414e175e6cd11e43d4adbbd2c86446a69'
+            'address': '0x1fda97d224ebce016b9a2cb4a96864ef18090462'
+          },
+          'eth_token1': {
+            'class': 'DSEthToken',
+            'address': '0xa8079609a6aa4545aa0ab6c9d108bbeab187f5c9'
           },
           'token_registry': {
             'class': 'DSTokenRegistry',
-            'address': '0x213183be469a38e99facc2c468bb7e3c01377bce'
+            'address': '0x9e2a411a0eb749fa380497bdcd97dedee5514c8d'
           },
           'multisig': {
             'class': 'DSEasyMultisig',
-            'address': '0x0868d6fe00148ab71dda33ad2500eedf2b729372'
+            'address': '0x51a3a8541268076a5548b495b32a279cf01884f3'
           },
           'echo': {
             'class': 'Echo',
             'address': '0x803b0657331c7e9fa0124635d3ea5540d9150c2a'
+          }
+        }
+      },
+      'live': {
+        'objects': {
+          'auth_factory1': {
+            'class': 'DSAuthFactory',
+            'address': '0x52802189f8a5f7d0d3d80ae7c02c28514c978871'
+          },
+          'data_factory1': {
+            'class': 'DSDataFactory',
+            'address': '0xd7d9821bbf2857230482a94ff2f16ab370ca6bbb'
+          },
+          'multisig_factory1': {
+            'class': 'DSMultisigFactory',
+            'address': '0x9404b6d3fdc712fb1733dcefdef5623c4d2ce7c0'
+          },
+          'token_factory1': {
+            'class': 'DSTokenFactory',
+            'address': '0x285d11b03c9dc1f0eec21b1f18b4e1293fede90e'
+          },
+          'token_installer1': {
+            'class': 'DSTokenInstaller',
+            'address': '0x9ae19a2fd7465f38f91cc72bdd98fba92c12c00b'
+          },
+          'factory1': {
+            'class': 'DSFactory1',
+            'address': '0x4e3037b3be6b39debe54d42b2b0472326b62576d'
+          },
+          'eth_token1': {
+            'class': 'DSEthToken',
+            'address': '0x47f52d380f2983675a4020915b77dc48f773fc33'
+          },
+          'token_registry': {
+            'class': 'DSTokenRegistry',
+            'address': '0x37d3e484971a2463eef75b684ca3e17c93128884'
+          },
+          'multisig': {
+            'class': 'DSEasyMultisig',
+            'address': '0x8ba0e78c257902993354297ceb83bea95b5c652a'
+          },
+          'echo': {
+            'class': 'Echo',
+            'address': '0x7d3767952188c0843876a3c30e6985d13ba6cec2'
           }
         }
       }
@@ -4380,6 +4423,7 @@ dapple['dappsys'] = (function builder () {
     for (var i in env.objects) {
       var obj = env.objects[i];
       this.objects[i] = this.classes[obj['class']].at(obj.address);
+      this.objects[i].abi = this.classes[obj['class']].abi;
     }
 
     this.environment = env;
@@ -4392,23 +4436,62 @@ dapple['dappsys'] = (function builder () {
 })();
 
 dapple['maker'] = (function builder () {
+  function sanitize (web3, opts, cb) {
+    var defaultOpts = {
+      from: web3.eth.defaultAccount || web3.eth.coinbase
+    };
+
+    if (typeof opts === 'function') {
+      cb = opts;
+      opts = defaultOpts;
+    }
+    if (typeof opts === 'undefined') {
+      opts = defaultOpts;
+    }
+    if (typeof cb === 'undefined') {
+      cb = function () {};
+    }
+
+    if (!opts.gas) {
+      opts.gas = web3.eth.estimateGas(opts);
+    }
+
+    return {opts: opts, cb: cb};
+  }
+
   var MakerAdmin = function (maker) {
     this._maker = maker;
     this._dappsys = maker.dappsys;
-    this.multisig = maker.dappsys.objects.multisig;
+    this._web3 = maker.dappsys.web3;
+    this._multisig = maker.dappsys.objects.multisig;
   };
 
-  MakerAdmin.prototype.propose = function (obj, func, args, value, opts, cb) {
-    var proposalData;
-
-    if (this._dappsys[obj][func].getData) {
-      proposalData = this._dappsys[obj][func].getData
-                     .apply(this._dappsys[obj], args);
-    } else {
-      proposalData = this._getData(obj, func, args);
+  MakerAdmin.prototype.proposeAction = function (
+      contract, func, args, value, opts, cb) {
+    if (typeof contract === 'string') {
+      if (!(contract in this._dappsys.objects)) {
+        throw new Error('Unrecognized contract name: ' + contract);
+      }
+      contract = this._dappsys.objects[contract];
     }
 
-    var filter = this.multisig.Proposed(
+    if (!(func in contract)) {
+      throw new Error('Unrecognized function name: ' + func);
+    }
+
+    var sanitized = sanitize(this._web3, opts, cb);
+    opts = sanitized.opts;
+    cb = sanitized.cb;
+
+    var proposalData;
+
+    if (contract[func].getData) {
+      proposalData = contract[func].getData.apply(contract, args);
+    } else {
+      proposalData = this._getData(contract, func, args);
+    }
+
+    var filter = this._multisig.Proposed(
         {calldata: proposalData},
         function (err, evt) {
           filter.stopWatching();
@@ -4416,26 +4499,26 @@ dapple['maker'] = (function builder () {
           cb(null, evt.args.action_id);
         });
 
-    var objects = this._dappsys.environment.objects;
-    if (targetName in this._maker) {
-      objects = this._maker;
-    }
-    var objAddress = objects[obj]['address'];
-    this.multisig.propose(objAddress, proposalData, value, opts);
+    return this._multisig.propose(contract.address, proposalData, value, opts);
   };
 
-  MakerAdmin.prototype.confirm = function () {
-    this.multisig.confirm.apply(this.multisig, arguments);
+  MakerAdmin.prototype.confirmAction = function (actionID, opts, cb) {
+    return this._doAction('confirm', actionID, opts, cb);
   };
 
-  MakerAdmin.prototype._getData = function (targetName, func, args) {
-    var objects = this._dappsys.environment.objects;
+  MakerAdmin.prototype.triggerAction = function (actionID, opts, cb) {
+    return this._doAction('trigger', actionID, opts, cb);
+  };
 
-    if (targetName in this._maker) {
-      objects = this._maker;
+  MakerAdmin.prototype.isAdmin = function (address) {
+    if (typeof address === 'undefined') {
+      address = this._web3.eth.defaultAccount || this._web3.eth.coinbase;
     }
-    var targetClass = objects[targetName]['class'];
-    var targetABI = this._dappsys.headers[targetClass].interface;
+    return this._multisig.isMember.call(address);
+  };
+
+  MakerAdmin.prototype._getData = function (contract, func, args) {
+    var targetABI = JSON.parse(JSON.stringify(contract.abi));
 
     for (var i = 0; i < targetABI.length; i += 1) {
       if (targetABI[i].type !== 'function') continue;
@@ -4448,7 +4531,42 @@ dapple['maker'] = (function builder () {
     return echoer[func].call.apply(echoer, args);
   };
 
-  var Maker = function (environment, _web3) {
+  MakerAdmin.prototype._doAction = function (verb, actionID, opts, cb) {
+    var sanitized = sanitize(this._web3, opts, cb);
+    opts = sanitized.opts;
+    cb = sanitized.cb;
+
+    var that = this;
+    var filter = this._web3.eth.filter('latest', function (err, block) {
+      if (err) {
+        filter.stopWatching();
+        return cb(err);
+      }
+
+      that._web3.eth.getTransactionReceipt(txID, function (err, receipt) {
+        if (err) {
+          filter.stopWatching();
+          return cb(err);
+        }
+
+        if (receipt.blockNumber) {
+          filter.stopWatching();
+
+          if (receipt.logs.length === 0) {
+            return cb('Exception was thrown in multisig contract. ' +
+                      'Did you send from your admin multisig address?' +
+                      'Have you already ' + verb + 'ed this action?');
+          }
+          return cb(null, actionID);
+        }
+      });
+    });
+
+    var txID = this._multisig[verb](actionID, opts);
+    return txID;
+  };
+
+  var Maker = function (_web3, environment) {
     if (typeof web3 === 'undefined') {
       if (typeof _web3 !== 'undefined') {
         var web3 = _web3;
@@ -4457,23 +4575,28 @@ dapple['maker'] = (function builder () {
       }
     }
 
-    this.dappsys = new dapple.dappsys.class(environment, web3);
-
-    this.tokenRegistry = this.dappsys.objects.token_registry;
-
-    this.DAI = this.dappsys.classes['DSTokenFrontend']
-        .at(this.tokenRegistry.getToken.call('DAI'));
-
-    this.ETH = this.dappsys.classes['DSEthToken']
-        .at(this.tokenRegistry.getToken.call('ETH'));
-
-    this.MKR = this.dappsys.classes['DSTokenFrontend']
-        .at(this.tokenRegistry.getToken.call('MKR'));
-
+    this._web3 = web3;
+    this.dappsys = new dapple.dappsys.class(web3, environment);
     this.admin = new MakerAdmin(this);
   };
 
-  Maker.prototype.
+  Maker.prototype.getToken = function (symbol) {
+    var tokenClass = 'DSTokenFrontend';
+    if (symbol === 'ETH') {
+      tokenClass = 'DSEthToken';
+    }
+    var token = this.dappsys.classes[tokenClass].at(
+        this._web3.toHex(this._web3.toBigNumber(
+            this.dappsys.objects.token_registry.get(symbol))));
+    token.abi = this.dappsys.classes[tokenClass].abi;
+
+    return token;
+  };
+
+  // Helper function for logging callback arguments.
+  Maker.prototype.logCB = function () {
+    console.log(JSON.stringify(arguments));
+  };
 
   return Maker;
 })();
