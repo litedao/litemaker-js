@@ -57,7 +57,7 @@ dapple['dappsys'] = (function builder () {
             'address': '0x51a3a8541268076a5548b495b32a279cf01884f3'
           },
           'echo': {
-            'class': 'Echo',
+            'class': 'DSEcho',
             'address': '0x803b0657331c7e9fa0124635d3ea5540d9150c2a'
           }
         }
@@ -101,7 +101,7 @@ dapple['dappsys'] = (function builder () {
             'address': '0x8ba0e78c257902993354297ceb83bea95b5c652a'
           },
           'echo': {
-            'class': 'Echo',
+            'class': 'DSEcho',
             'address': '0x7d3767952188c0843876a3c30e6985d13ba6cec2'
           }
         }
@@ -4409,7 +4409,7 @@ dapple['dappsys'] = (function builder () {
           },
         ]
       },
-      'Echo': {
+      'DSEcho': {
         'interface': [],
       }
     };
