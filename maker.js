@@ -4472,28 +4472,15 @@ dapple['maker'] = (function builder () {
 
   MakerAdmin.prototype.proposeAction = function (
       contract, func, args, value, opts, cb) {
-    if (typeof contract === 'string') {
-      if (!(contract in this._dappsys.objects)) {
-        throw new Error('Unrecognized contract name: ' + contract);
-      }
-      contract = this._dappsys.objects[contract];
-    }
-
-    if (!(func in contract)) {
-      throw new Error('Unrecognized function name: ' + func);
-    }
-
     var sanitized = sanitize(this._web3, opts, cb);
     opts = sanitized.opts;
     cb = sanitized.cb;
 
-    var proposalData;
-
-    if (contract[func].getData) {
-      proposalData = contract[func].getData.apply(contract, args);
-    } else {
-      proposalData = this._getData(contract, func, args);
+    if (typeof contract === 'string') {
+      contract = this._stringToContract(contract);
     }
+
+    var proposalData = this._constructProposalData(contract, func, args);
 
     var filter = this._multisig.Proposed(
         {calldata: proposalData},
@@ -4512,6 +4499,59 @@ dapple['maker'] = (function builder () {
 
   MakerAdmin.prototype.triggerAction = function (actionID, opts, cb) {
     return this._doAction('trigger', actionID, opts, cb);
+  };
+
+  MakerAdmin.prototype.verifyAction = function (
+      actionID, contract, func, args, value, cb) {
+    var that = this;
+    if (typeof contract === 'string') {
+      contract = this._stringToContract(contract);
+    }
+
+    var proposalData = this._constructProposalData(contract, func, args);
+
+    // Check the last 10000 blocks for a proposal with the given action ID,
+    // which should cover one whole voting round with some room to spare.
+    var lookback = 10000;
+
+    function compareTxData (err, tx) {
+      if (err) {
+        return cb(err);
+      }
+      var expectedData = that._getData(
+          that._multisig, 'propose', [contract.address, proposalData, value]);
+      var res = {
+        actionID: actionID,
+        actualData: tx.input,
+        expectedData: expectedData
+      };
+      res.verified = (res.actualData === res.expectedData);
+      res.message = (res.verified ?
+          'Passes verification. Should be safe to confirm.' :
+          'Does NOT pass verification! Do NOT confirm!');
+      return cb(null, res);
+    }
+
+    that._web3.eth.getBlockNumber(function (err, latestBN) {
+      if (err) {
+        return cb(err);
+      }
+      that.ActionProposed(
+        {action_id: actionID},
+        {fromBlock: latestBN - lookback, toBlock: latestBN})
+      .get(function (err, logs) {
+        if (err) {
+          return cb(err);
+        }
+        if (logs.length === 0) {
+          return cb('Could not find action proposal with ID ' + actionID +
+                    ' in the last ' + lookback + ' blocks!');
+        }
+
+        that._web3.eth.getTransaction(
+          logs[0].transactionHash, compareTxData);
+      });
+    })
   };
 
   MakerAdmin.prototype.actionStatus = function (actionID) {
@@ -4540,7 +4580,30 @@ dapple['maker'] = (function builder () {
     return this._multisig.isMember.call(address);
   };
 
+  MakerAdmin.prototype._stringToContract = function (contractName) {
+    if (!(contract in this._dappsys.objects)) {
+      throw new Error('Unrecognized contract name: ' + contract);
+    }
+    return this._dappsys.objects[contract];
+  };
+
+  MakerAdmin.prototype._constructProposalData = function (
+      contract, func, args) {
+    if (!(func in contract)) {
+      throw new Error('Unrecognized function name: ' + func);
+    }
+
+    return this._getData(contract, func, args);
+  }
+
   MakerAdmin.prototype._getData = function (contract, func, args) {
+    if (!(func in contract)) {
+      throw new Error(func + ' function not found in contract!');
+    }
+    if (contract[func].getData) {
+      return contract[func].getData.apply(contract, args);
+    }
+
     var targetABI = JSON.parse(JSON.stringify(contract.abi));
 
     for (var i = 0; i < targetABI.length; i += 1) {
@@ -4623,9 +4686,19 @@ dapple['maker'] = (function builder () {
 
   Maker.prototype.logAction = function (err, actionID) {
     if (err) {
-      console.log('ERROR: ' + err);
+      console.log('ERROR: Action #' + actionID + ': ' + err);
+    } else {
+      console.log('Action ID: ' + actionID);
     }
-    console.log('Action ID: ' + actionID);
+  };
+
+  Maker.prototype.logVerification = function (err, response) {
+    if (err) {
+      console.log('ERROR: ' + err);
+    } else {
+      console.log('Action #' + response.actionID + ' verification result: ' +
+          response.message);
+    }
   };
 
   return Maker;

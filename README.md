@@ -134,6 +134,15 @@ Action ID: 1
 
 }
 
+> // Other admins will want to verify our proposal before voting.
+> // To do so, they pass in the action ID, the target contract,
+> // the function name, the function arguments, the wei value to be sent,
+> // and a callback. The `maker.logVerification` callback prints the results in
+> // a user-friendly format to the console.
+> maker.admin.verifyAction(1, maker.getToken('MKR'), 'transfer',
+.. [<our coinbase address>, 1], 0, maker.logVerification)
+Action #1 verification result: Passes verification. Should be safe to confirm.
+
 // Given enough confirmations, we should be able to trigger the action.
 > maker.admin.triggerAction(1, opts, maker.logAction)
 Action ID: 1
