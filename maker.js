@@ -94,11 +94,11 @@ dapple['dappsys'] = (function builder () {
           },
           'token_registry': {
             'class': 'DSTokenRegistry',
-            'address': '0x42'
+            'address': '0xc6882fbffd309dc976dd6e4c79cc91e4c1482140'
           },
           'multisig': {
             'class': 'DSEasyMultisig',
-            'address': '0x43'
+            'address': '0xe02640be68df835aa3327ea6473c02c8f6c3815a'
           },
           'echo': {
             'class': 'DSEcho',
