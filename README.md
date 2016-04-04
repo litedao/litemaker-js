@@ -197,3 +197,10 @@ need to know about or use these components, but developers may find them useful:
 ["address", "getToken", "updateAuthority", "get", "unset", "_authority",
 "_auth_mode", "tryGet", "set", "allEvents", "SetNullable", "DSAuthUpdate", "abi"]
 ```
+
+## Code Generation
+
+The code in `maker.js` was partially generated using Dapple. I began with
+running `dapple build --no-deploy-data` in `maker-core` and then manually added
+helper functions and classes at the bottom of the generated file. At present
+there is no clean way to update the generated code portion of the file.
