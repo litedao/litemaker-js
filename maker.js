@@ -4666,6 +4666,12 @@ dapple['maker'] = (function builder () {
     this.admin = new MakerAdmin(this);
   };
 
+  Maker.prototype.object = function (className, address) {
+    var contract = this.dappsys.classes[className].at(address);
+    contract.abi = this.dappsys.headers[className].interface;
+    return contract;
+  };
+
   Maker.prototype.getToken = function (symbol) {
     var tokenClass = 'DSTokenFrontend';
     if (symbol === 'ETH') {
