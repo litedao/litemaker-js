@@ -4591,10 +4591,10 @@ dapple['maker'] = (function builder () {
   };
 
   MakerAdmin.prototype._stringToContract = function (contractName) {
-    if (!(contract in this._dappsys.objects)) {
-      throw new Error('Unrecognized contract name: ' + contract);
+    if (!(contractName in this._dappsys.objects)) {
+      throw new Error('Unrecognized contract name: ' + contractName);
     }
-    return this._dappsys.objects[contract];
+    return this._dappsys.objects[contractName];
   };
 
   MakerAdmin.prototype._constructProposalData = function (
