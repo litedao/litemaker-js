@@ -4478,17 +4478,25 @@ dapple['maker'] = (function builder () {
     this.ActionTriggered = this._multisig.Triggered.bind(this._multisig);
   };
 
-  MakerAdmin.prototype.proposeAction = function (
-      contract, func, args, value, opts, cb) {
-    var sanitized = sanitize(this._web3, opts, cb);
-    opts = sanitized.opts;
-    cb = sanitized.cb;
-
+  MakerAdmin.prototype.getData = function (contract, func, args) {
     if (typeof contract === 'string') {
       contract = this._stringToContract(contract);
     }
+    return this._constructTransactionData(contract, func, args);
+  };
 
-    var proposalData = this._constructProposalData(contract, func, args);
+  MakerAdmin.prototype.proposeAction = function (
+      contract, func, args, value, opts, cb) {
+    var proposalData = this.getData(contract, func, args, value, opts);
+    return this.proposeRawAction(
+        contract.address, proposalData, value, opts, cb);
+  };
+
+  MakerAdmin.prototype.proposeRawAction = function (
+      address, proposalData, value, opts, cb) {
+    var sanitized = sanitize(this._web3, opts, cb);
+    opts = sanitized.opts;
+    cb = sanitized.cb;
 
     var filter = this._multisig.Proposed(
         {calldata: proposalData},
@@ -4498,7 +4506,7 @@ dapple['maker'] = (function builder () {
           cb(null, evt.args.action_id);
         });
 
-    return this._multisig.propose(contract.address, proposalData, value, opts);
+    return this._multisig.propose(address, proposalData, value, opts);
   };
 
   MakerAdmin.prototype.confirmAction = function (actionID, opts, cb) {
@@ -4516,7 +4524,7 @@ dapple['maker'] = (function builder () {
       contract = this._stringToContract(contract);
     }
 
-    var proposalData = this._constructProposalData(contract, func, args);
+    var proposalData = this._constructTransactionData(contract, func, args);
 
     // Check the last 10000 blocks for a proposal with the given action ID,
     // which should cover one whole voting round with some room to spare.
@@ -4597,7 +4605,7 @@ dapple['maker'] = (function builder () {
     return this._dappsys.objects[contractName];
   };
 
-  MakerAdmin.prototype._constructProposalData = function (
+  MakerAdmin.prototype._constructTransactionData = function (
       contract, func, args) {
     if (!(func in contract)) {
       throw new Error('Unrecognized function name: ' + func);
