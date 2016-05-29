@@ -30,7 +30,7 @@ dapple['dappsys'] = (function builder () {
           },
           'multisig_factory1': {
             'class': 'DSMultisigFactory',
-            'address': '0x0b30a24e7257e1842d681b0f2f8aff4182eb2a78'
+            'address': '0xda3b78a3261caed41f59dc3a9e83559e683c9d85'
           },
           'token_factory1': {
             'class': 'DSTokenFactory',
@@ -42,9 +42,9 @@ dapple['dappsys'] = (function builder () {
           },
           'factory1': {
             'class': 'DSFactory1',
-            'address': '0x3da0d9695d0099f98582f58a64b2e2616fcbaa00'
+            'address': '0x3c58df9a125b5f0de4d32689e5c0b24f971e16c5'
           },
-          'eth_token1': {
+          'eth_token': {
             'class': 'DSEthToken',
             'address': '0xfbc7f6b58daa9f99816b6cc77d2a7f4b327fa7bc'
           },
@@ -54,7 +54,7 @@ dapple['dappsys'] = (function builder () {
           },
           'multisig': {
             'class': 'DSEasyMultisig',
-            'address': '0xcd85c33878a7f378483c6422eee32631ea6f8001'
+            'address': '0xab001acfb0468eb8fc995b14e072d1eb0e143a44'
           },
           'echo': {
             'class': 'DSEcho',
@@ -74,7 +74,7 @@ dapple['dappsys'] = (function builder () {
           },
           'multisig_factory1': {
             'class': 'DSMultisigFactory',
-            'address': '0x82f39d996d1e9ab119e4b33d581c3eeb4133acf6'
+            'address': '0x580c2caa8796c0352a1e0e326fc1d2505f54381f'
           },
           'token_factory1': {
             'class': 'DSTokenFactory',
@@ -86,7 +86,7 @@ dapple['dappsys'] = (function builder () {
           },
           'factory1': {
             'class': 'DSFactory1',
-            'address': '0x2c139c5a8dd6be98067c5b4258e0dedcdbbff78b'
+            'address': '0x93779e2cb8448a24bede8da55f1dffbadbc585a9'
           },
           'eth_token1': {
             'class': 'DSEthToken',
@@ -98,7 +98,7 @@ dapple['dappsys'] = (function builder () {
           },
           'multisig': {
             'class': 'DSEasyMultisig',
-            'address': '0xe02640be68df835aa3327ea6473c02c8f6c3815a'
+            'address': '0x2a04d1b57069568203a652171fb7c6701128b041'
           },
           'echo': {
             'class': 'DSEcho',
@@ -1183,6 +1183,14 @@ dapple['dappsys'] = (function builder () {
               {
                 'name': 'triggered',
                 'type': 'bool'
+              },
+              {
+                'name': 'target',
+                'type': 'address'
+              },
+              {
+                'name': 'eth_value',
+                'type': 'uint256'
               }
             ],
             'type': 'function'
@@ -4559,7 +4567,9 @@ dapple['maker'] = (function builder () {
     return {
       'confirmations': statusArray[0],
       'expiration': new Date(statusArray[1] * 1000),
-      'triggered': statusArray[2]
+      'triggered': statusArray[2],
+      'target': statusArray[3],
+      'eth_value': statusArray[4]
     };
   };
 
