@@ -88,7 +88,7 @@ dapple['dappsys'] = (function builder () {
             'class': 'DSFactory1',
             'address': '0x93779e2cb8448a24bede8da55f1dffbadbc585a9'
           },
-          'eth_token1': {
+          'eth_token': {
             'class': 'DSEthToken',
             'address': '0xd654bdd32fc99471455e86c2e7f7d7b6437e9179'
           },
