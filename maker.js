@@ -98,7 +98,7 @@ dapple['dappsys'] = (function builder () {
           },
           'multisig': {
             'class': 'DSEasyMultisig',
-            'address': '0x2a04d1b57069568203a652171fb7c6701128b041'
+            'address': '0xe02640be68df835aa3327ea6473c02c8f6c3815a'
           },
           'echo': {
             'class': 'DSEcho',
