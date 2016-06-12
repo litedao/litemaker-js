@@ -46,7 +46,7 @@ dapple['dappsys'] = (function builder () {
           },
           'eth_token': {
             'class': 'DSEthToken',
-            'address': '0xfbc7f6b58daa9f99816b6cc77d2a7f4b327fa7bc'
+            'address': '0x52fe88b987c7829e5d5a61c98f67c9c14e6a7a90'
           },
           'token_registry': {
             'class': 'DSTokenRegistry',
@@ -54,7 +54,7 @@ dapple['dappsys'] = (function builder () {
           },
           'multisig': {
             'class': 'DSEasyMultisig',
-            'address': '0xab001acfb0468eb8fc995b14e072d1eb0e143a44'
+            'address': '0xb6a1c3ede5a199176ff1860618d6927599bc2aa7'
           },
           'echo': {
             'class': 'DSEcho',
@@ -90,7 +90,7 @@ dapple['dappsys'] = (function builder () {
           },
           'eth_token': {
             'class': 'DSEthToken',
-            'address': '0xd654bdd32fc99471455e86c2e7f7d7b6437e9179'
+            'address': '0xecf8f87f810ecf450940c9f60066b4a7a501d6a7'
           },
           'token_registry': {
             'class': 'DSTokenRegistry',
@@ -98,7 +98,7 @@ dapple['dappsys'] = (function builder () {
           },
           'multisig': {
             'class': 'DSEasyMultisig',
-            'address': '0x2a04d1b57069568203a652171fb7c6701128b041'
+            'address': '0x776a192f558f1b36329db47d4381778b825998e3'
           },
           'echo': {
             'class': 'DSEcho',
@@ -4541,6 +4541,7 @@ dapple['maker'] = (function builder () {
         actualData: tx.input,
         expectedData: expectedData
       };
+      console.log(JSON.stringify(res));
       res.verified = (res.actualData === res.expectedData);
       res.message = (res.verified ?
           'Passes verification. Should be safe to confirm.' :
