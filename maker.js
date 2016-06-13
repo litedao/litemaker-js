@@ -54,7 +54,7 @@ dapple['dappsys'] = (function builder () {
           },
           'multisig': {
             'class': 'DSEasyMultisig',
-            'address': '0xb6a1c3ede5a199176ff1860618d6927599bc2aa7'
+            'address': '0x3748b6ec35df83102516c001516ff50f5708a3e9'
           },
           'echo': {
             'class': 'DSEcho',
@@ -98,7 +98,7 @@ dapple['dappsys'] = (function builder () {
           },
           'multisig': {
             'class': 'DSEasyMultisig',
-            'address': '0x776a192f558f1b36329db47d4381778b825998e3'
+            'address': '0x8ed4b8b8859e247f3e10eae876485cf2bc8abcf7'
           },
           'echo': {
             'class': 'DSEcho',
