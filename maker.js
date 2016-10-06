@@ -100,6 +100,14 @@ dapple['dappsys'] = (function builder () {
             'class': 'DSEasyMultisig',
             'address': '0xe02640be68df835aa3327ea6473c02c8f6c3815a'
           },
+          'root_auth': {
+              'class': 'DSAuthorized',
+              'address': '0x77a79a78c56504c6c1f7499852b6e1918a6d0ab4'
+          },
+          'new_ms': {
+              'class': 'DSEasyMultisig',
+              'address': '0x7bb0b08587b8a6b8945e09f1baca426558b0f06a'
+          },
           'echo': {
             'class': 'DSEcho',
             'address': '0x992c64ac907ef9e531e7ff8d06cec599778a0e72'
