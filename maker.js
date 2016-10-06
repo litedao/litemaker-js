@@ -4487,6 +4487,9 @@ dapple['maker'] = (function builder () {
 
   MakerAdmin.prototype.proposeAction = function (
       contract, func, args, value, opts, cb) {
+    if (typeof contract === 'string') {
+      contract = this._stringToContract(contract);
+    }
     var proposalData = this.getData(contract, func, args, value, opts);
     return this.proposeRawAction(
         contract.address, proposalData, value, opts, cb);
