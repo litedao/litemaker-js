@@ -1,8 +1,4 @@
-##### Maker on SLACK - join us
-------
-[![Slack Status](http://slack.makerdao.com/badge.svg)](https:/slack.makerdao.com)
-
-# MakerJS
+# LiteMakerJS
 
 This is a JS wrapper meant to simplify working with the Maker system. In its
 present iteration, it provides the ability to transfer tokens in the Maker Asset
